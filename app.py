@@ -9,6 +9,7 @@ EMAIL         = os.environ.get("EMAIL") or ""           # 邮箱必填，登录�
 PASSWORD      = os.environ.get("PASSWORD") or ""        # 主用密码登录方式, 失败时才使用,必须填写
 TG_CHAT_ID    = os.environ.get("TG_CHAT_ID") or ""      # TG chat id,不填写不通知，需和bot token一起填写生效
 TG_BOT_TOKEN  = os.environ.get("TG_BOT_TOKEN") or ""    # TG bot token 
+PROXY_URL     = os.environ.get("PROXY_SERVER", "").strip() or ""
 
 BASE_URL = "https://bot-hosting.net"
 
@@ -342,21 +343,17 @@ def main():
     print("   Bot-hosting 自动续期")
     print("#" * 25)
 
-    IS_PROXY = os.environ.get("IS_PROXY", "false").lower() == "true"
-    PROXY_SERVER = os.environ.get("PROXY_SERVER", "").strip() or "http://127.0.0.1:1080"
-    HEADLESS = os.environ.get("HEADLESS", "false").lower() == "true" 
+    sb_kwargs = {"uc": True, "headless": False, "locale_code": "en-US"}
 
-    sb_kwargs = {"uc": True, "headless": HEADLESS, "locale_code": "en-US"}
-
-    if IS_PROXY:
-        print(f"🔗 挂载代理: {PROXY_SERVER}")
-        sb_kwargs["proxy"] = PROXY_SERVER
+    if PROXY_URL:
+        print(f"🔗 挂载代理: {PROXY_URL}")
+        sb_kwargs["proxy"] = PROXY_URL
     else:
         print("🍭 未使用代理，直连访问")
 
     with SB(**sb_kwargs) as sb:
         try:
-            ip = get_current_ip(PROXY_SERVER if IS_PROXY else "")
+            ip = get_current_ip(PROXY_URL)
             print(f"📍 当前出口IP: {ip}")
         except Exception as e:
             print(f"⚠️ 获取出口 IP 失败: {e}")
@@ -413,7 +410,7 @@ def main():
 
         if not login_ok:
             send_telegram_message(format_notification("❌ 登录失败", error="Password 登录失败"))
-            return
+            sys.exit(1)
 
         # 提取当前到期日期
         sb.sleep(3)
@@ -465,7 +462,7 @@ def main():
             except Exception as e:
                 print(f"❌ 点击外部按钮失败: {e}")
                 send_telegram_message(format_notification("❌ 续期失败", error="点击外部续期按钮出错"))
-                return
+                sys.exit(1)
 
             # 处理弹窗中的 Turnstile
             turnstile_passed = True  # 未检测到 Turnstile 时视为无需验证
@@ -486,7 +483,7 @@ def main():
             if not turnstile_passed:
                 print("❌ Turnstile 验证最终未通过，脚本退出")
                 send_telegram_message(format_notification("❌ 续期失败", error="Turnstile 验证未通过"))
-                return
+                sys.exit(1)
 
             # 点击续期按钮
             print("⏳ 等待续期按钮可用并点击...")
@@ -542,6 +539,8 @@ def main():
                             expiry_date=current_expiry or "（未获取到）"
                         )
                     )
+                    sb.save_screenshot("renew_unknown.png")
+                    sys.exit(1)
 
         else:
             if countdown_text:
@@ -563,6 +562,7 @@ def main():
                         expiry_date=current_expiry or "（未获取到）"
                     )
                 )
+                sys.exit(1)
 
         print("🏁 脚本执行完毕")
 
