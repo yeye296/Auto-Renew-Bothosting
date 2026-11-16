@@ -567,6 +567,7 @@ def main():
                         expiry_date=current_expiry or "（未获取到）"
                     )
                 )
+                sb.save_screenshot("renew_unknown.png")
                 sys.exit(1)
 
         print("🏁 脚本执行完毕")
