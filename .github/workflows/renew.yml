@@ -43,6 +43,17 @@ jobs:
         run: |
           xvfb-run --auto-servernum python3 app.py
 
+      - name: 上传截图产物
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ github.run_number }}
+          path: |
+            # 👇 使用 ** 递归匹配该目录及子目录（如 screenshots/）下的所有 png
+            path: ./**/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       # --- 新增的防暂停代码开始 ---
       - name: Commit time.txt to repo
         if: success()
