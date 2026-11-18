@@ -48,9 +48,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screenshots-${{ github.run_number }}
-          path: |
-            # 👇 使用 ** 递归匹配该目录及子目录（如 screenshots/）下的所有 png
-            path: ./**/*.png
+          # 👇 使用 ** 递归匹配该目录及子目录（如 screenshots/）下的所有 png
+          path: "**/*.png"
           if-no-files-found: ignore
           retention-days: 7
 
